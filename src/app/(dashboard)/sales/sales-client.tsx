@@ -322,7 +322,8 @@ export function SalesClient({
             {recentSales.length === 0 ? (
               <p className="text-center py-8 text-sm text-muted-foreground">Nema evidentiranih prodaja</p>
             ) : (
-              <table className="w-full">
+              <div className="overflow-x-auto">
+              <table className="w-full min-w-[550px]">
                 <thead>
                   <tr className="border-b bg-muted/50">
                     <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Broj</th>
@@ -354,6 +355,7 @@ export function SalesClient({
                   ))}
                 </tbody>
               </table>
+              </div>
             )}
           </CardContent>
         </Card>

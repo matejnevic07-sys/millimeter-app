@@ -21,6 +21,8 @@ const emptyForm = {
   vrat: "", grudi: "", struk: "", kuk: "", rame: "", rukav: "", duzina: "",
 };
 
+const PAGE_SIZE = 25;
+
 export function CustomersClient({ customers }: { customers: Customer[] }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -28,8 +30,9 @@ export function CustomersClient({ customers }: { customers: Customer[] }) {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [error, setError] = useState("");
+  const [page, setPage] = useState(1);
 
-  const filtered = customers.filter((c) => {
+  const allFiltered = customers.filter((c) => {
     const q = search.toLowerCase();
     return (
       `${c.firstName} ${c.lastName}`.toLowerCase().includes(q) ||
@@ -38,6 +41,8 @@ export function CustomersClient({ customers }: { customers: Customer[] }) {
       (c.city ?? "").toLowerCase().includes(q)
     );
   });
+  const totalPages = Math.ceil(allFiltered.length / PAGE_SIZE);
+  const filtered = allFiltered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,7 +147,7 @@ export function CustomersClient({ customers }: { customers: Customer[] }) {
         </div>
       )}
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: "Ukupno", value: String(customers.length) },
           { label: "Platinum", value: String(platinum) },
@@ -163,12 +168,13 @@ export function CustomersClient({ customers }: { customers: Customer[] }) {
 
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input placeholder="Pretraži klijente..." className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
+        <Input placeholder="Pretraži klijente..." className="pl-9" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
       </div>
 
       <Card>
         <CardContent className="p-0">
-          <table className="w-full">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[700px]">
             <thead>
               <tr className="border-b bg-muted/50">
                 <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Klijent</th>
@@ -221,6 +227,19 @@ export function CustomersClient({ customers }: { customers: Customer[] }) {
           {filtered.length === 0 && (
             <div className="text-center py-12 text-muted-foreground">
               {search ? `Nema rezultata za "${search}"` : "Nema klijenata. Dodaj prvog!"}
+            </div>
+          )}
+          </div>
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t text-sm text-muted-foreground">
+              <span>{(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, allFiltered.length)} od {allFiltered.length}</span>
+              <div className="flex gap-1">
+                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                  className="px-3 py-1 border rounded hover:bg-muted disabled:opacity-40 transition-colors">←</button>
+                <span className="px-3 py-1">{page} / {totalPages}</span>
+                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                  className="px-3 py-1 border rounded hover:bg-muted disabled:opacity-40 transition-colors">→</button>
+              </div>
             </div>
           )}
         </CardContent>

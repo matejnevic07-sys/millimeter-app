@@ -39,6 +39,8 @@ const typeLabels: Record<string, string> = {
   correction: "Korekcija",
 };
 
+const PAGE_SIZE = 25;
+
 export function OrdersClient({
   orders, customers, initialFilter,
 }: {
@@ -48,10 +50,11 @@ export function OrdersClient({
 }) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState(initialFilter ?? "all");
+  const [page, setPage] = useState(1);
 
   const customerMap = Object.fromEntries(customers.map(c => [c.id, c]));
 
-  const filtered = orders
+  const allFiltered = orders
     .filter((o) => {
       const customer = o.customerId ? customerMap[o.customerId] : null;
       const matchSearch =
@@ -76,6 +79,9 @@ export function OrdersClient({
       if (b.dueDate) return 1;
       return 0;
     });
+
+  const totalPages = Math.ceil(allFiltered.length / PAGE_SIZE);
+  const filtered = allFiltered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const overdueCount = orders.filter(isOverdue).length;
 
@@ -106,13 +112,13 @@ export function OrdersClient({
       </div>
 
       {/* Status tabs */}
-      <div className="flex gap-1 border-b">
+      <div className="flex gap-1 border-b overflow-x-auto">
         {tabs.map(tab => {
           const isRedTab = tab.key === "overdue" || tab.key === "unpaid";
           const isActive = statusFilter === tab.key;
           return (
-            <button key={tab.key} onClick={() => setStatusFilter(tab.key)}
-              className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px flex items-center gap-1.5
+            <button key={tab.key} onClick={() => { setStatusFilter(tab.key); setPage(1); }}
+              className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px flex items-center gap-1.5 whitespace-nowrap
                 ${isActive
                   ? isRedTab ? "border-red-500 text-red-600" : "border-black text-foreground"
                   : "border-transparent text-muted-foreground hover:text-foreground"}`}>
@@ -133,12 +139,13 @@ export function OrdersClient({
 
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input placeholder="Pretraži po klijentu, broju..." className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
+        <Input placeholder="Pretraži po klijentu, broju..." className="pl-9" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
       </div>
 
       <Card>
         <CardContent className="p-0">
-          <table className="w-full">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[700px]">
             <thead>
               <tr className="border-b bg-muted/50">
                 <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Nalog</th>
@@ -201,6 +208,19 @@ export function OrdersClient({
           {filtered.length === 0 && (
             <div className="text-center py-12 text-muted-foreground">
               {search ? `Nema rezultata za "${search}"` : "Nema naloga. Kreiraj prvi nalog!"}
+            </div>
+          )}
+          </div>
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t text-sm text-muted-foreground">
+              <span>{(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, allFiltered.length)} od {allFiltered.length}</span>
+              <div className="flex gap-1">
+                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                  className="px-3 py-1 border rounded hover:bg-muted disabled:opacity-40 transition-colors">←</button>
+                <span className="px-3 py-1">{page} / {totalPages}</span>
+                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                  className="px-3 py-1 border rounded hover:bg-muted disabled:opacity-40 transition-colors">→</button>
+              </div>
             </div>
           )}
         </CardContent>

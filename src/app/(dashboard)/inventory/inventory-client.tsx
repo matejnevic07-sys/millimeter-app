@@ -174,7 +174,7 @@ export function InventoryClient({ materials, inventoryItems }: { materials: Mate
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: "Materijali", value: String(materials.length) },
           { label: "Gotova roba", value: String(inventoryItems.length) },
@@ -423,7 +423,8 @@ export function InventoryClient({ materials, inventoryItems }: { materials: Mate
       {activeTab === "materials" && (
         <Card>
           <CardContent className="p-0">
-            <table className="w-full">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[750px]">
               <thead>
                 <tr className="border-b bg-muted/50">
                   <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Artikal</th>
@@ -491,6 +492,7 @@ export function InventoryClient({ materials, inventoryItems }: { materials: Mate
             {filteredMaterials.length === 0 && (
               <div className="text-center py-12 text-muted-foreground">Nema materijala.</div>
             )}
+            </div>
           </CardContent>
         </Card>
       )}
@@ -499,7 +501,8 @@ export function InventoryClient({ materials, inventoryItems }: { materials: Mate
       {activeTab === "items" && (
         <Card>
           <CardContent className="p-0">
-            <table className="w-full">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[750px]">
               <thead>
                 <tr className="border-b bg-muted/50">
                   <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Artikal</th>
@@ -563,6 +566,7 @@ export function InventoryClient({ materials, inventoryItems }: { materials: Mate
             {filteredItems.length === 0 && (
               <div className="text-center py-12 text-muted-foreground">Nema gotove robe.</div>
             )}
+            </div>
           </CardContent>
         </Card>
       )}
