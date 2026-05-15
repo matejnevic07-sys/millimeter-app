@@ -5,14 +5,39 @@ import { useRouter } from "next/navigation";
 import { updateCustomer, saveMeasurements, addHistoricalPurchase } from "@/lib/actions/customers";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Phone, Mail, MapPin, Ruler, Star, ClipboardList, Wrench, Check, Pencil, Plus, History } from "lucide-react";
+import { ArrowLeft, Phone, Mail, MapPin, Ruler, Star, ClipboardList, Wrench, Check, Pencil, Plus, History, CalendarDays, Clock } from "lucide-react";
 import Link from "next/link";
-import type { Customer, CustomerMeasurement, Order, Correction } from "@/lib/db/schema";
+import type { Customer, CustomerMeasurement, Order, Correction, Appointment } from "@/lib/db/schema";
 
 type CustomerWithDetails = Customer & {
   measurements: CustomerMeasurement[];
   orders: Order[];
   corrections: Correction[];
+};
+
+const typeLabels: Record<string, string> = {
+  merenje: "Merenje", proba: "Proba", isporuka: "Isporuka",
+  konsultacija: "Konsultacija", ostalo: "Ostalo",
+};
+
+const typeColors: Record<string, string> = {
+  merenje: "bg-blue-100 text-blue-800",
+  proba: "bg-purple-100 text-purple-800",
+  isporuka: "bg-green-100 text-green-800",
+  konsultacija: "bg-yellow-100 text-yellow-800",
+  ostalo: "bg-gray-100 text-gray-700",
+};
+
+const apptStatusLabels: Record<string, string> = {
+  scheduled: "Zakazano", completed: "Obavljeno",
+  cancelled: "Otkazano", no_show: "Nije došao",
+};
+
+const apptStatusColors: Record<string, string> = {
+  scheduled: "bg-blue-100 text-blue-800",
+  completed: "bg-green-100 text-green-800",
+  cancelled: "bg-gray-100 text-gray-500",
+  no_show: "bg-red-100 text-red-700",
 };
 
 const statusLabels: Record<string, string> = {
@@ -54,7 +79,7 @@ const correctionStatusColors: Record<string, string> = {
   not_resolved: "bg-red-100 text-red-700",
 };
 
-export function CustomerProfileClient({ customer }: { customer: CustomerWithDetails }) {
+export function CustomerProfileClient({ customer, appointments }: { customer: CustomerWithDetails; appointments: Appointment[] }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [editMode, setEditMode] = useState(false);
@@ -470,6 +495,57 @@ export function CustomerProfileClient({ customer }: { customer: CustomerWithDeta
               </CardContent>
             </Card>
           )}
+
+          {/* Termini */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-3">
+              <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                <CalendarDays className="w-4 h-4" /> Termini ({appointments.length})
+              </CardTitle>
+              <Link href={`/appointments`}
+                className="text-xs text-muted-foreground hover:underline">
+                Svi termini →
+              </Link>
+            </CardHeader>
+            <CardContent>
+              {appointments.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Nema zakazanih termina</p>
+              ) : (
+                <div className="space-y-2">
+                  {appointments.slice(0, 6).map((a) => {
+                    const dt = new Date(a.scheduledAt);
+                    const isPast = dt < new Date();
+                    return (
+                      <div key={a.id} className="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-muted/30">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className={`text-xs px-2 py-1 rounded font-medium shrink-0 ${typeColors[a.type] ?? "bg-gray-100 text-gray-700"}`}>
+                            {typeLabels[a.type] ?? a.type}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Clock className="w-3 h-3 shrink-0" />
+                              <span className={isPast ? "text-muted-foreground" : "text-foreground font-medium"}>
+                                {dt.toLocaleDateString("sr-RS")} u {dt.toLocaleTimeString("sr-RS", { hour: "2-digit", minute: "2-digit" })}
+                              </span>
+                            </div>
+                            {a.notes && <p className="text-xs text-muted-foreground truncate mt-0.5">{a.notes}</p>}
+                          </div>
+                        </div>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${apptStatusColors[a.status] ?? "bg-gray-100"}`}>
+                          {apptStatusLabels[a.status] ?? a.status}
+                        </span>
+                      </div>
+                    );
+                  })}
+                  {appointments.length > 6 && (
+                    <p className="text-xs text-muted-foreground text-center pt-1">
+                      + još {appointments.length - 6} termina
+                    </p>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

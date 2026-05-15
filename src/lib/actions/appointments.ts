@@ -98,6 +98,16 @@ export async function updateAppointment(
   revalidatePath("/appointments");
 }
 
+export async function getCustomerAppointments(customerId: string) {
+  const { dbUser } = await getCurrentUser();
+
+  return db.query.appointments.findMany({
+    where: (a, { and, eq }) =>
+      and(eq(a.companyId, dbUser.companyId!), eq(a.customerId, customerId)),
+    orderBy: (a, { desc }) => [desc(a.scheduledAt)],
+  });
+}
+
 export async function deleteAppointment(id: string) {
   const { dbUser } = await getCurrentUser();
 
